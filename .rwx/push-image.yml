@@ -1,0 +1,30 @@
+base:
+  image: ubuntu:24.04
+  config: rwx/base 1.0.0
+
+tasks:
+  - key: aws-cli
+    call: aws/install-cli 1.0.7
+
+  - key: aws
+    use: aws-cli
+    call: aws/assume-role 2.0.5
+    with:
+      region: us-east-2
+      role-to-assume: arn:aws:iam::537248441529:role/ecr-demo
+      role-duration-seconds: 900
+
+  - key: rwx-cli
+    call: rwx/install-cli 2.0.2
+
+  - key: push-image
+    docker: true
+    use: [rwx-cli, aws]
+    run: |
+      aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin $REGISTRY_HOST
+      rwx push $IMAGE_TASK_ID --to $REGISTRY_HOST/demo:$REMOTE_TAG
+    env:
+      AWS_OIDC_TOKEN: ${{ vaults.default.oidc.ecr-demo }}
+      IMAGE_TASK_ID: ${{ init.image-task-id }}
+      REGISTRY_HOST: 537248441529.dkr.ecr.us-east-2.amazonaws.com
+      REMOTE_TAG: ${{ init.image-tag }}

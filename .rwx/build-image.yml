@@ -1,0 +1,38 @@
+base:
+  image: node:24.11.0-trixie-slim
+  config: none
+
+tasks:
+  - key: system
+    run: |
+      apt-get -y update
+      apt-get -y upgrade
+      apt-get -y install curl jq
+      apt-get -y clean
+    cache:
+      # limit the cache to regularly get the latest system updates
+      ttl: 1 day
+
+  - key: code
+    use: system
+    call: git/clone 1.8.0
+    with:
+      repository: https://github.com/rwx-cloud/rwx-image-example.git
+      ref: ${{ init.commit-sha }}
+
+  - key: npm-install
+    use: code
+    run: npm ci --omit=dev
+    filter:
+      - package.json
+      - package-lock.json
+
+  - key: image
+    use: npm-install
+    run: |
+      # drop root privileges and run as the node user
+      echo "node" | tee $RWX_IMAGE/user
+
+      echo "node server.js" | tee $RWX_IMAGE/command
+    env:
+      NODE_ENV: production

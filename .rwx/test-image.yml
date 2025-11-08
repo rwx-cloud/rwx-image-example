@@ -1,0 +1,31 @@
+base:
+  image: ubuntu:24.04
+  config: rwx/base 1.0.0
+
+tasks:
+  - key: aws-cli
+    call: aws/install-cli 1.0.7
+
+  - key: aws
+    use: aws-cli
+    call: aws/assume-role 2.0.5
+    with:
+      region: us-east-2
+      role-to-assume: arn:aws:iam::537248441529:role/ecr-demo
+      role-duration-seconds: 900
+
+  - key: test-image
+    docker: true
+    use: aws
+    background-processes:
+      - key: app
+        run: |
+          aws ecr get-login-password --region us-east-2 \
+            | docker login --username AWS --password-stdin $REGISTRY_HOST
+          docker run --init -p 3000:3000 $REGISTRY_HOST/demo:$IMAGE_TAG
+        ready-check: rwx-docker-ready-check
+    run: curl -fsS http://localhost:3000
+    env:
+      AWS_OIDC_TOKEN: ${{ vaults.default.oidc.ecr-demo }}
+      IMAGE_TAG: ${{ init.image-tag }}
+      REGISTRY_HOST: 537248441529.dkr.ecr.us-east-2.amazonaws.com

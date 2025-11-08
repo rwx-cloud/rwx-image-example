@@ -1,0 +1,23 @@
+on:
+  github:
+    push:
+      init:
+        commit-sha: ${{ event.git.sha }}
+
+tasks:
+  - key: build-image
+    call: ${{ run.dir }}/build-image.yml
+    init:
+      commit-sha: ${{ init.commit-sha }}
+
+  - key: push-image
+    call: ${{ run.dir }}/push-image.yml
+    init:
+      image-task-id: ${{ tasks.build-image.tasks.image.id }}
+      image-tag: ${{ init.commit-sha }}
+
+  - key: test-image
+    after: push-image
+    call: ${{ run.dir }}/test-image.yml
+    init:
+      image-tag: ${{ init.commit-sha }}

@@ -1,0 +1,12 @@
+{
+  "name": "node-hello",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0"
+  }
+}
