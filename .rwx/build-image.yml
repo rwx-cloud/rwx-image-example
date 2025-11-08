@@ -6,12 +6,8 @@ tasks:
   - key: system
     run: |
       apt-get -y update
-      apt-get -y upgrade
       apt-get -y install curl jq
       apt-get -y clean
-    cache:
-      # limit the cache to regularly get the latest system updates
-      ttl: 1 day
 
   - key: code
     use: system
