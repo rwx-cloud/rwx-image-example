@@ -18,7 +18,6 @@ tasks:
     call: rwx/install-cli 2.0.2
 
   - key: push-image
-    docker: true
     use: [rwx-cli, aws]
     run: |
       aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin $REGISTRY_HOST
